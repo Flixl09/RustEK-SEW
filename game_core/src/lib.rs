@@ -52,7 +52,22 @@ impl Piece {
         //      R180: (3-x, 3-y)
         //      R270: (y, 3-x)
         //  - Translate by (self.x, self.y)
-        unimplemented!()
+        let alignment0 = match self.kind {
+            PieceKind::I => [(0,0), (0, 1), (0, 2), (0, 3)],
+            PieceKind::O => [(0,0), (0, 1), (1, 0), (1, 1)],
+            PieceKind::T => [(0,1), (1,0), (1,1), (2,1)],
+            PieceKind::S => [(0,1), (1,0), (1,1), (2,0)],
+            PieceKind::Z => [(0,0), (1,0), (1,1), (2,1)],
+            PieceKind::J => [(1,0), (1,1), (1,2), (0,2)],
+            PieceKind::L => [(0,0), (0,1), (0,2), (1,2)],
+        };
+
+        match self.rot {
+            Rot::R0 => alignment0,
+            Rot::R90 => alignment0.map(|p| (3-p.1, p.0)),
+            Rot::R180 => alignment0.map(|p| (3-p.0, 3-p.1)),
+            Rot::R270 => alignment0.map(|p| (p.1, 3-p.0)),
+        }.map(|p| (p.0 + self.x, p.1 + self.y))
     }
 }
 
@@ -117,7 +132,16 @@ impl Board {
         // TODO: true if any block is out of bounds (y<0 is allowed until lock) or hits Solid.
         // Treat y<0 as *allowed* (spawning above the board), but x bounds must hold.
         // Once y>=0, check cell occupancy.
-        unimplemented!()
+        let mut collide = false;
+        for (x, y) in p.blocks() {
+            if !Self::in_bounds(x, y) { collide = true }
+            else if y >= 0 {
+                if let Cell::Solid(_) = self.cells[y as usize][x as usize] {
+                    collide = true;
+                }
+            }
+        }
+        collide
     }
 
     pub fn move_side(&mut self, dx: i32) {
@@ -161,13 +185,34 @@ impl Board {
     fn lock_active(&mut self) {
         // TODO: convert active blocks into Solid cells if y>=0
         // Then clear complete lines, update score/lines, and spawn next piece.
-        unimplemented!()
+        if self.active.y >= 0 {
+            for (x, y) in self.active.blocks() {
+                self.cells[y as usize][x as usize] = Cell::Solid(self.active.kind)
+            }
+        }
+
     }
 
     pub fn clear_lines(&mut self) -> u32 {
         // TODO: remove full rows; return how many were cleared.
         // Strategy: collect rows to keep, then fill from bottom.
-        unimplemented!()
+        let mut rows_removed: u32 = 0;
+        let mut rows_to_keep: [[Cell;W]; H] = self.cells.clone();
+        for y in 0..H {
+            let mut full = true;
+            for x in 0..W {
+                if self.cells[y][x] == Cell::Empty {
+                    full = false;
+                    break
+                }
+            }
+            if full {
+                rows_removed += 1;
+                rows_to_keep[y] = [Cell::Empty; W]
+            }
+        }
+        self.cells = rows_to_keep;
+        rows_removed
     }
 }
 
