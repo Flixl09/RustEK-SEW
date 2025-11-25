@@ -3,6 +3,7 @@
 //! Board is 10 x 20 (visible). Coordinates: (x,y), x:0..10, y:0..20 (0 at top).
 
 use rand::{seq::SliceRandom, rng};
+use log::log;
 
 pub const W: usize = 10;
 pub const H: usize = 20;
@@ -191,27 +192,33 @@ impl Board {
             }
         }
 
+        self.lines_cleared += self.clear_lines();
+        self.spawn_new_active();
     }
 
     pub fn clear_lines(&mut self) -> u32 {
         // TODO: remove full rows; return how many were cleared.
         // Strategy: collect rows to keep, then fill from bottom.
         let mut rows_removed: u32 = 0;
-        let mut rows_to_keep: [[Cell;W]; H] = self.cells.clone();
+        let mut rows_to_keep: [[Cell;W]; H];
         for y in 0..H {
             let mut full = true;
             for x in 0..W {
                 if self.cells[y][x] == Cell::Empty {
                     full = false;
-                    break
+                    break;
                 }
             }
             if full {
                 rows_removed += 1;
-                rows_to_keep[y] = [Cell::Empty; W]
+                for yabove in (1..=y).rev() {
+                    for x in 0..W {
+                        self.cells[yabove][x] = self.cells[yabove-1][x];
+                        self.cells[yabove-1][x] = Cell::Empty;
+                    }
+                }
             }
         }
-        self.cells = rows_to_keep;
         rows_removed
     }
 }
