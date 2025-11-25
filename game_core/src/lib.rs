@@ -3,7 +3,6 @@
 //! Board is 10 x 20 (visible). Coordinates: (x,y), x:0..10, y:0..20 (0 at top).
 
 use rand::{seq::SliceRandom, rng};
-use log::log;
 
 pub const W: usize = 10;
 pub const H: usize = 20;
@@ -200,7 +199,6 @@ impl Board {
         // TODO: remove full rows; return how many were cleared.
         // Strategy: collect rows to keep, then fill from bottom.
         let mut rows_removed: u32 = 0;
-        let mut rows_to_keep: [[Cell;W]; H];
         for y in 0..H {
             let mut full = true;
             for x in 0..W {
