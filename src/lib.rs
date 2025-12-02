@@ -99,6 +99,9 @@ impl Plottable for (f64, f64) {
 // Return a reference to the item farthest from the origin.
 // Note the explicit lifetime tying the returned reference to the input slice.
 pub fn furthest_from_origin<T: Plottable>(items: &[T]) -> Option<&T> {
+    // items.iter().max_by_key(
+    //    |x|
+    //        (x.x().powf(2.0) + x.y().powf(2.0)));
     items.iter().max_by(
         |x,y|
             (x.x().powf(2.0) + x.y().powf(2.0))
@@ -106,13 +109,19 @@ pub fn furthest_from_origin<T: Plottable>(items: &[T]) -> Option<&T> {
                     &(y.x().powf(2.0) + y.y().powf(2.0))))
 }
 
+//pub fn furthest_from_origin(items: &[dyn Plottable]) -> Option<usize> {}
+
 // ---------- 5. ERRORS & OPTION/RESULT ----------
 pub fn parse_port(s: &str) -> Result<u16, String> {
     // TODO: parse string into u16; map errors into a friendly String
     // hint: use s.parse::<u16>()
     let port = s.parse::<u16>();
-    let port_parsed: Result<u16, String> = port.map_err(|err| err.to_string());
-    port_parsed
+    let port = port.map_err(|err| err.to_string())?;
+    if port <= 1024 {
+        return Err("keine priviligierten Ports".to_string());
+    }
+    // let port_parsed: Result<u16, String> = port.map_err(|err| err.to_string());
+    Ok(port)
 }
 
 // ---------- 6. ITERATORS & CLOSURES ----------
